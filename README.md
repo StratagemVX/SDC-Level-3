@@ -529,4 +529,4 @@ A: To enable Camera and Microphone access over a local network, the Vite dev ser
 
 ## License
 
-No license file is currently defined in this repository. Add a LICENSE file (for example MIT, Apache-2.0, or GPL-3.0) before external distribution.
+This project is licensed under the MIT License. See the LICENSE file for details.
