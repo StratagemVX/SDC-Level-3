@@ -1,0 +1,223 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Extreme Dark / Midnight Background */
+    --background: 220 30% 5%;
+    --foreground: 150 100% 70%; /* Neon green text */
+
+    --card: 220 30% 8%;
+    --card-foreground: 150 100% 70%;
+
+    --popover: 220 30% 8%;
+    --popover-foreground: 150 100% 70%;
+
+    /* Neon Green / Cyan Accents */
+    --primary: 150 100% 50%;
+    --primary-foreground: 220 30% 5%;
+
+    --secondary: 180 100% 40%;
+    --secondary-foreground: 220 30% 5%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 150 50% 60%;
+
+    --accent: 180 100% 40%;
+    --accent-foreground: 220 30% 5%;
+
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 100% 30%;
+    --input: 150 100% 30%;
+    --ring: 150 100% 50%;
+
+    --radius: 0.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Share Tech Mono', 'Inter', monospace;
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(0, 50, 20, 0.15) 0%, rgba(0, 0, 0, 0) 60%),
+      linear-gradient(rgba(0, 255, 100, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 100, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    background-attachment: fixed;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+}
+
+/* Glassmorphism & Cyberpunk Utilities */
+.glass-panel {
+  background: rgba(10, 20, 15, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 100, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 100, 0.05), inset 0 0 10px rgba(0, 255, 100, 0.05);
+}
+
+.glass-panel:hover {
+  border: 1px solid rgba(0, 255, 100, 0.5);
+  box-shadow: 0 0 30px rgba(0, 255, 100, 0.1), inset 0 0 15px rgba(0, 255, 100, 0.1);
+  transition: all 0.3s ease-out;
+}
+
+.text-glow {
+  text-shadow: 0 0 8px rgba(0, 255, 100, 0.8), 0 0 20px rgba(0, 255, 100, 0.4);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.4);
+  color: #00ffff;
+}
+
+.btn-cyber {
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+  border: 1px solid hsl(var(--primary));
+  box-shadow: 0 0 10px rgba(0, 255, 100, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-cyber:hover {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 0 25px rgba(0, 255, 100, 0.6);
+  text-shadow: none;
+}
+
+.btn-cyber::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: 0.5s;
+}
+
+.btn-cyber:hover::after {
+  left: 100%;
+}
+
+/* Animations */
+.message-container {
+  animation: glitch-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.scanline {
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,255,100,0.1) 50%, rgba(0,0,0,0) 100%);
+  opacity: 0.5;
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100px; }
+}
+
+@keyframes glitch-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px) skewX(-10deg);
+    filter: drop-shadow(0 0 10px rgba(0,255,100,0.5));
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) skewX(0);
+    filter: drop-shadow(0 0 0px rgba(0,0,0,0));
+  }
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 10px;
+  height: 1.2em;
+  background-color: hsl(var(--primary));
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #00ff64 0%, #00ffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 10px rgba(0, 255, 100, 0.3);
+}
+
+@keyframes waveform {
+  0%, 100% { height: 8px; }
+  50% { height: 24px; }
+}
+
+.animate-waveform {
+  animation: waveform 1s ease-in-out infinite;
+}
+
+@keyframes slide-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-enter {
+  animation: slide-up-fade 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 20, 15, 0.4);
+  border-left: 1px solid rgba(0, 255, 100, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 100, 0.3);
+  border: 1px solid rgba(0, 255, 100, 0.5);
+  border-radius: 0px; /* blocky cyberpunk look */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 100, 0.6);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

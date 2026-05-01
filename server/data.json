@@ -1,0 +1,26 @@
+{
+  "users": {
+    "agent_zero": {
+      "hash": "$2b$10$Paoz8GMgeyNfFlox.5nxWu67xBa9YtOfq61NH9.9Zg1/OeMceqy.G"
+    },
+    "Manohar": {
+      "hash": "$2b$10$zqvW4kwMf3t2.gc0cc6zI.rZU26OsnGrh9/pi.bTHeufmisKT0noW"
+    },
+    "Rahul": {
+      "hash": "$2b$10$jEIWwcHHRipuu.r2n7cW.ugGY0JjpMXAhhSoTnRXfWIiXmluKLoOW"
+    },
+    "karna": {
+      "hash": "$2b$10$ab5ZbafpKzFVSpzpta81GeYO726E8Z0UgExlohp8EWfPfsQu0iG02"
+    },
+    "arun": {
+      "hash": "$2b$10$liRwcYr7HhmQf.PZBv0pHu8Jq2pyhRXtXSCl/n3X4MDF9TeF5njNe"
+    },
+    "chethu": {
+      "hash": "$2b$10$1aopwIzgAI0hmodOlzoOF.X2eguwFeSQstknbE91quWZHQvy0F17O"
+    },
+    "TEJU": {
+      "hash": "$2b$10$bHiqka7v6r96nVG1WGMpQuSA.sgSvyFtcIxkTCwg24ZdtIjPf2bdS"
+    }
+  },
+  "messages": []
+}
