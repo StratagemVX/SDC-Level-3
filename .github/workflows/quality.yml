@@ -1,0 +1,41 @@
+name: Quality & Security Checks
+
+on:
+  push:
+    branches: ["main", "maintenance/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies safely
+        run: npm ci --ignore-scripts
+
+      - name: Audit production dependencies (critical threshold)
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Syntax check backend server
+        run: node --check server/index.js && node --check server/security.js
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Unit & security tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build

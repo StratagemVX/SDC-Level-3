@@ -114,6 +114,26 @@ export default function DashboardPage() {
   ]);
   const allowedExtensions = [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".zip", ".7z", ".rar", ".txt", ".rtf", ".csv", ".json", ".mp3", ".wav", ".ogg", ".m4a", ".mp4", ".webm", ".mov", ".avi", ".mkv", ".jpg", ".jpeg", ".png", ".gif", ".webp"];
 
+  const currentChatMsgs = useMemo(() => {
+    if (!user) return [];
+    return messages
+      .filter(m => 
+        (m.senderId === user.userId && m.receiverId === selectedContact) || 
+        (m.senderId === selectedContact && m.receiverId === user.userId)
+      )
+      .sort((a, b) => a.createdAt - b.createdAt);
+  }, [messages, selectedContact, user]);
+
+  useEffect(() => {
+    if (!chatScrollRef.current || !chatEndRef.current) return;
+    if (isNearBottom) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+      setHasNewMessages(false);
+    } else {
+      setHasNewMessages(true);
+    }
+  }, [currentChatMsgs.length, isNearBottom]);
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -127,25 +147,6 @@ export default function DashboardPage() {
   
   if (selectedContact) recentContactsSet.add(selectedContact);
   const visibleContacts = Array.from(recentContactsSet);
-
-  const currentChatMsgs = useMemo(() => {
-    return messages
-      .filter(m => 
-        (m.senderId === user.userId && m.receiverId === selectedContact) || 
-        (m.senderId === selectedContact && m.receiverId === user.userId)
-      )
-      .sort((a, b) => a.createdAt - b.createdAt);
-  }, [messages, selectedContact, user.userId]);
-
-  useEffect(() => {
-    if (!chatScrollRef.current || !chatEndRef.current) return;
-    if (isNearBottom) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-      setHasNewMessages(false);
-    } else {
-      setHasNewMessages(true);
-    }
-  }, [currentChatMsgs.length, isNearBottom]);
 
   const handleScroll = () => {
     if (scrollTimerRef.current) window.clearTimeout(scrollTimerRef.current);

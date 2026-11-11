@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { encryptMessage, encryptFilePayload, hashSecretKey, sanitizeFileName } from "../utils/encryption";
@@ -64,43 +63,55 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
   const [users, setUsers] = useState<string[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const socketRef = useRef<Socket | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    if (!user?.token) return;
     try {
-      const res = await fetch("/api/users");
+      const res = await fetch("/api/users", {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       const data = await res.json();
       setUsers(data.users || []);
     } catch (e) {
       console.error("Failed to fetch users", e);
     }
-  };
+  }, [user, logout]);
 
   const refreshMessages = useCallback(async () => {
-    if (!user?.userId) return;
+    if (!user?.userId || !user?.token) return;
     try {
-      const res = await fetch(`/api/messages/${user.userId}`);
+      const res = await fetch(`/api/messages/${encodeURIComponent(user.userId)}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       const data = await res.json();
       setMessages(data.messages || []);
     } catch (e) {
       console.error("Failed to fetch messages", e);
     }
-  }, [user]);
+  }, [user, logout]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.token) {
       fetchUsers();
       refreshMessages();
       setMessagesLoading(false);
 
-      // Use current origin so Vite proxy can handle socket.io and API requests over HTTPS
-      const socket = io("/", { transports: ["websocket"], reconnection: true });
-      socketRef.current = socket;
-
-      socket.on("connect", () => {
-        socket.emit("register", { userId: user.userId });
+      const socket = io("/", {
+        transports: ["websocket"],
+        reconnection: true,
+        auth: { token: user.token },
       });
+      socketRef.current = socket;
 
       socket.on("presence_update", ({ onlineUsers: online }) => {
         const onlineSet = new Set(online || []);
@@ -130,6 +141,12 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
         });
       });
 
+      socket.on("connect_error", (err) => {
+        if (err.message === "Authentication required" || err.message === "Invalid session user") {
+          logout();
+        }
+      });
+
       socket.on("disconnect", () => {
         setOnlineUsers(new Set());
       });
@@ -139,7 +156,12 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
         socketRef.current = null;
       };
     }
-  }, [user, refreshMessages]);
+
+    setMessages([]);
+    setUsers([]);
+    setOnlineUsers(new Set());
+    setTypingUsers(new Set());
+  }, [user, fetchUsers, refreshMessages, logout]);
 
   const sendMessage = async (
     receiverId: string,
@@ -148,7 +170,9 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
     ttlMinutes: number,
     onStage?: (stage: SendStage) => void
   ) => {
-    if (!user) return;
+    if (!user?.token) {
+      throw new Error("Authentication required");
+    }
     const secretKeyHash = hashSecretKey(secretKey);
     let encryptedContent = "";
     let type: MessageType = "text";
@@ -172,7 +196,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
       else if (fileType.startsWith("audio/")) type = "audio";
       else type = "file";
     }
-    
+
     onStage?.("transmitting");
     const socket = socketRef.current;
     if (socket && socket.connected) {
@@ -180,7 +204,6 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
         socket.emit(
           "send_message",
           {
-            senderId: user.userId,
             receiverId,
             type,
             encryptedContent,
@@ -200,11 +223,13 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
         );
       });
     } else {
-      await fetch("/api/messages", {
+      const res = await fetch("/api/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
         body: JSON.stringify({
-          senderId: user.userId,
           receiverId,
           type,
           encryptedContent,
@@ -215,6 +240,10 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
           ttlMinutes
         })
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to send message");
+      }
       await refreshMessages();
     }
   };
@@ -223,7 +252,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
     if (!user) return;
     const socket = socketRef.current;
     if (socket && socket.connected) {
-      socket.emit("typing", { fromUserId: user.userId, toUserId: receiverId });
+      socket.emit("typing", { toUserId: receiverId });
     }
   };
 
@@ -231,12 +260,20 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
     if (!user) return;
     const socket = socketRef.current;
     if (socket && socket.connected) {
-      socket.emit("stop_typing", { fromUserId: user.userId, toUserId: receiverId });
+      socket.emit("stop_typing", { toUserId: receiverId });
     }
   };
 
   const deleteMessage = async (messageId: string) => {
-    await fetch(`/api/messages/${messageId}`, { method: "DELETE" });
+    if (!user?.token) return;
+    const res = await fetch(`/api/messages/${encodeURIComponent(messageId)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    if (!res.ok) {
+      if (res.status === 401) logout();
+      return;
+    }
     setMessages(prev => prev.filter(m => m.id !== messageId));
   };
 
