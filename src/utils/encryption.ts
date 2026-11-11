@@ -36,7 +36,13 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 export const sanitizeFileName = (name: string): string => {
-  const cleaned = name.replace(/[\x00-\x1F\x7F]/g, "").replace(/[\\/]/g, "-");
+  const cleaned = Array.from(name)
+    .filter((ch) => {
+      const code = ch.charCodeAt(0);
+      return code > 31 && code !== 127;
+    })
+    .join("")
+    .replace(/[\\/]/g, "-");
   return cleaned.trim().slice(0, 200) || "payload";
 };
 

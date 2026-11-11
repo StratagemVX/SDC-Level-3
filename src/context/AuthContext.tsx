@@ -1,8 +1,8 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 
 export interface User {
   userId: string;
+  token: string;
 }
 
 interface AuthContextType {
@@ -33,12 +33,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load user session from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser) as Partial<User> | null;
+        if (parsed && typeof parsed.userId === "string" && typeof parsed.token === "string" && parsed.token.length > 0) {
+          setUser({ userId: parsed.userId, token: parsed.token });
+        } else {
+          localStorage.removeItem("user");
+        }
       } catch (e) {
         console.error("Failed to parse stored user", e);
         localStorage.removeItem("user");
@@ -47,7 +51,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Auth functions accessing local API
   const register = async (userId: string, password: string) => {
     setError(null);
     try {
@@ -56,14 +59,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, password })
       });
-      
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Registration failed');
       }
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
+      throw err instanceof Error ? err : new Error(message);
     }
   };
 
@@ -75,18 +79,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, password })
       });
-      
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Login failed');
       }
+      if (typeof data.token !== 'string' || !data.token) {
+        throw new Error('Server did not return an authentication token');
+      }
 
-      const newUser = { userId: data.userId };
+      const newUser: User = { userId: data.userId, token: data.token };
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+      throw err instanceof Error ? err : new Error(message);
     }
   };
 
